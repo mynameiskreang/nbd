@@ -1,0 +1,8 @@
+token: "token"
+
+renthub: [
+  "https://www.renthub.in.th/search/condo_filter?search_price=monthly&condo_monthly_price%5Bprice_range_2%5D=1&temp%5Bzone_id%5D=115&locale=th",
+  "https://www.renthub.in.th/search/condo_filter?search_price=monthly&condo_monthly_price%5Bprice_range_2%5D=1&temp%5Bzone_id%5D=395&locale=th",
+  "https://www.renthub.in.th/search/condo_filter?search_price=monthly&condo_monthly_price%5Bprice_range_2%5D=1&temp%5Bzone_id%5D=238&locale=th",
+  "https://www.renthub.in.th/search/condo_filter?search_price=monthly&condo_monthly_price%5Bprice_range_2%5D=1&temp%5Bzone_id%5D=105&locale=th"
+]
