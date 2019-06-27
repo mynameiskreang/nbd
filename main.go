@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -13,7 +14,8 @@ import (
 )
 
 var tokenLineNotify string
-var mapDatabase = map[string]bool{}
+var idDatabase = map[string]bool{}
+var hashDatabase = map[string]bool{}
 
 func init() {
 	readData()
@@ -35,12 +37,24 @@ func readData() {
 	if err != nil {
 		notify(err.Error(), "")
 	}
-	json.Unmarshal(fs, &mapDatabase)
+	json.Unmarshal(fs, &idDatabase)
+
+	fs, err = ioutil.ReadFile("hash.db")
+	if err != nil {
+		notify(err.Error(), "")
+	}
+	json.Unmarshal(fs, &hashDatabase)
 }
 
 func writeData() {
-	data, _ := json.Marshal(mapDatabase)
+	data, _ := json.Marshal(idDatabase)
 	err := ioutil.WriteFile("nbd.db", data, os.ModePerm)
+	if err != nil {
+		notify(err.Error(), "")
+	}
+
+	data, _ = json.Marshal(hashDatabase)
+	err = ioutil.WriteFile("hash.db", data, os.ModePerm)
 	if err != nil {
 		notify(err.Error(), "")
 	}
@@ -71,8 +85,8 @@ func getRenthub(urlReq string) {
 	doc.Find("li").Each(func(i int, sel *goquery.Selection) {
 		if id, isExist := sel.Attr("id"); isExist {
 			// Check map
-			if !mapDatabase[id] {
-				mapDatabase[id] = true
+			if !idDatabase[id] {
+				idDatabase[id] = true
 				renthubInfo := model.RenthubInfo{}
 				renthubInfo.ID = id
 				renthubInfo.Name = sel.Find("span.name").Text()
@@ -81,7 +95,10 @@ func getRenthub(urlReq string) {
 				renthubInfo.Price = sel.Find("span.price").Text()
 				renthubInfo.Project = sel.Find("div.listing_project a").Text()
 				renthubInfo.LinkProject = "https://www.renthub.in.th" + sel.Find("div.listing_project a").AttrOr("href", "")
-				renthubInfos = append(renthubInfos, renthubInfo)
+				if !hashDatabase[helper.Hash256([]byte(renthubInfo.Name), false)] {
+					renthubInfos = append(renthubInfos, renthubInfo)
+				}
+				hashDatabase[helper.Hash256([]byte(renthubInfo.Name), false)] = true
 			}
 		}
 	})
@@ -89,7 +106,12 @@ func getRenthub(urlReq string) {
 	// Notification
 	for _, renthubInfo := range renthubInfos {
 		message := renthubInfo.Name + " " + renthubInfo.Price + " " + renthubInfo.LinkRoom
-		notify(message, renthubInfo.Image)
+		if os.Args[1] == "skip" {
+			fmt.Println(message, renthubInfo.Image)
+		} else {
+			notify(message, renthubInfo.Image)
+		}
+
 	}
 
 	// Update database
