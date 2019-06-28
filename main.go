@@ -27,7 +27,7 @@ func main() {
 	yaml.Unmarshal(fs, &config)
 
 	tokenLineNotify = config.Token
-	for _, site := range config.Renthub {
+	for _, site := range config.Renthub.Link {
 		getRenthub(site)
 	}
 }
@@ -90,15 +90,16 @@ func getRenthub(urlReq string) {
 				renthubInfo := model.RenthubInfo{}
 				renthubInfo.ID = id
 				renthubInfo.Name = sel.Find("span.name").Text()
+				renthubInfo.Name = strings.TrimSuffix(renthubInfo.Name, "UPDATE !")
 				renthubInfo.Image = sel.Find("img.tb").AttrOr("src", "")
 				renthubInfo.LinkRoom = "https://www.renthub.in.th" + sel.Find("span.name a").AttrOr("href", "")
 				renthubInfo.Price = sel.Find("span.price").Text()
 				renthubInfo.Project = sel.Find("div.listing_project a").Text()
 				renthubInfo.LinkProject = "https://www.renthub.in.th" + sel.Find("div.listing_project a").AttrOr("href", "")
-				if !hashDatabase[helper.Hash256([]byte(renthubInfo.Name), false)] {
+				if !hashDatabase[helper.HashMD5(renthubInfo.Name)] {
 					renthubInfos = append(renthubInfos, renthubInfo)
 				}
-				hashDatabase[helper.Hash256([]byte(renthubInfo.Name), false)] = true
+				hashDatabase[helper.HashMD5(renthubInfo.Name)] = true
 			}
 		}
 	})
