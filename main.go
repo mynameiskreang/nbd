@@ -22,7 +22,8 @@ func init() {
 }
 
 func main() {
-	fs, _ := ioutil.ReadFile("config.yaml")
+	fs, err := ioutil.ReadFile("config.yaml")
+	notifyError(err)
 	config := model.Config{}
 	yaml.Unmarshal(fs, &config)
 
@@ -34,39 +35,41 @@ func main() {
 
 func readData() {
 	fs, err := ioutil.ReadFile("nbd.db")
-	if err != nil {
-		notify(err.Error(), "")
-	}
-	json.Unmarshal(fs, &idDatabase)
+	notifyError(err)
+
+	err = json.Unmarshal(fs, &idDatabase)
+	notifyError(err)
 
 	fs, err = ioutil.ReadFile("hash.db")
-	if err != nil {
-		notify(err.Error(), "")
-	}
-	json.Unmarshal(fs, &hashDatabase)
+	notifyError(err)
+
+	err = json.Unmarshal(fs, &hashDatabase)
+	notifyError(err)
 }
 
 func writeData() {
-	data, _ := json.Marshal(idDatabase)
-	err := ioutil.WriteFile("nbd.db", data, os.ModePerm)
-	if err != nil {
-		notify(err.Error(), "")
-	}
+	data, err := json.Marshal(idDatabase)
+	notifyError(err)
 
-	data, _ = json.Marshal(hashDatabase)
+	err = ioutil.WriteFile("nbd.db", data, os.ModePerm)
+	notifyError(err)
+
+	data, err = json.Marshal(hashDatabase)
+	notifyError(err)
+
 	err = ioutil.WriteFile("hash.db", data, os.ModePerm)
-	if err != nil {
-		notify(err.Error(), "")
-	}
+	notifyError(err)
 }
 
 func getRenthub(urlReq string) {
-	req, _ := http.NewRequest("GET", urlReq, nil)
+	req, err := http.NewRequest("GET", urlReq, nil)
+	notifyError(err)
 	req.Header.Add("Accept", "*/*")
-	res, _ := http.DefaultClient.Do(req)
+	res, err := http.DefaultClient.Do(req)
+	notifyError(err)
 
-	defer res.Body.Close()
-	body, _ := ioutil.ReadAll(res.Body)
+	body, err := ioutil.ReadAll(res.Body)
+	notifyError(err)
 
 	output := helper.GetInnerSubstring(string(body), `{"results":"`, `"}`)
 	output = strings.Replace(output, `\"`, `"`, -1)
@@ -75,10 +78,7 @@ func getRenthub(urlReq string) {
 
 	rd := strings.NewReader(output)
 	doc, err := goquery.NewDocumentFromReader(rd)
-	if err != nil {
-		notify(err.Error(), "")
-		return
-	}
+	notifyError(err)
 
 	// Scrapping data
 	var renthubInfos []model.RenthubInfo
@@ -117,6 +117,9 @@ func getRenthub(urlReq string) {
 
 	// Update database
 	writeData()
+
+	err = res.Body.Close()
+	notifyError(err)
 }
 
 func notify(message, image string) {
@@ -135,4 +138,25 @@ func notify(message, image string) {
 
 	res, _ := http.DefaultClient.Do(req)
 	defer res.Body.Close()
+}
+
+func notifyError(err error) {
+	if err != nil {
+		message := err.Error()
+		url := "https://notify-api.line.me/api/notify"
+		payload := strings.NewReader("message=" + message)
+		req, _ := http.NewRequest("POST", url, payload)
+
+		req.Header.Add("authorization", "Bearer "+tokenLineNotify)
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Add("Accept", "*/*")
+		req.Header.Add("Cache-Control", "no-cache")
+		req.Header.Add("Host", "notify-api.line.me")
+		req.Header.Add("accept-encoding", "gzip, deflate")
+		req.Header.Add("Connection", "keep-alive")
+		req.Header.Add("cache-control", "no-cache")
+
+		res, _ := http.DefaultClient.Do(req)
+		defer res.Body.Close()
+	}
 }
