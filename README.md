@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/mynameiskreang/nbd.svg?branch=master)](https://travis-ci.org/mynameiskreang/nbd)
+
 # Noti Bok Duai (โนติ บอกด้วย)
 
 โปรแกรมแจ้งเตือนโพสประกาศเช่าคอนโด จากเว็บ https://www.renthub.in.th/
