@@ -25,7 +25,8 @@ func main() {
 	fs, err := ioutil.ReadFile("config.yaml")
 	notifyError(err)
 	config := model.Config{}
-	yaml.Unmarshal(fs, &config)
+	err = yaml.Unmarshal(fs, &config)
+	notifyError(err)
 
 	tokenLineNotify = config.Token
 	for _, site := range config.Renthub.Link {
@@ -137,7 +138,9 @@ func notify(message, image string) {
 	req.Header.Add("cache-control", "no-cache")
 
 	res, _ := http.DefaultClient.Do(req)
-	defer res.Body.Close()
+	err := res.Body.Close()
+
+	notifyError(err)
 }
 
 func notifyError(err error) {
@@ -157,6 +160,7 @@ func notifyError(err error) {
 		req.Header.Add("cache-control", "no-cache")
 
 		res, _ := http.DefaultClient.Do(req)
-		defer res.Body.Close()
+		err := res.Body.Close()
+		notifyError(err)
 	}
 }

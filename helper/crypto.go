@@ -11,12 +11,12 @@ import (
 func Hash512(input []byte, isNoise bool) (output string) {
 	// noise hash
 	if isNoise {
-		rand.Read(input)
+		_, _ = rand.Read(input)
 	}
 
 	// static hash
 	hasher := sha512.New()
-	hasher.Write(input)
+	_, _ = hasher.Write(input)
 	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 }
 
@@ -27,6 +27,6 @@ func EncodeBase64(input string) string {
 
 func HashMD5(input string) string {
 	h := md5.New()
-	io.WriteString(h, input)
+	_, _ = io.WriteString(h, input)
 	return string(h.Sum(nil))
 }
